@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>九州8県 転出超過数の累計推移（1982〜2025年）</title>
+<meta property="og:title" content="九州8県 転出超過数の累計推移（1982〜2025年）">
+<meta property="og:description" content="長崎県は九州で最大の転出超過。しかし2022年を底に反転の兆し。長崎市オープンデータ（BODIK）＋e-Stat分析。">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --border: #E2E0D8;
+    --text-primary: #1A1916;
+    --text-secondary: #6B6860;
+    --text-tertiary: #9E9C94;
+    --nagasaki: #C0392B;
+    --fukuoka: #2C7BB6;
+    --others: #C8C5B8;
+    --accent: #C0392B;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'Noto Sans JP', sans-serif;
+  }
+
+  html { font-size: 16px; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--sans);
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ヘッダー */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 48px 36px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .header-left { flex: 1; }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(22px, 4vw, 34px);
+    font-weight: 400;
+    line-height: 1.25;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 300;
+  }
+
+  .header-stat {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .stat-value {
+    font-family: var(--serif);
+    font-size: clamp(28px, 5vw, 44px);
+    color: var(--accent);
+    line-height: 1;
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+
+  /* メインコンテンツ */
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 0;
+  }
+
+  /* インサイトバー */
+  .insight-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  .insight-item {
+    background: var(--surface);
+    padding: 20px 24px;
+  }
+
+  .insight-num {
+    font-family: var(--serif);
+    font-size: 24px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .insight-num.red { color: var(--nagasaki); }
+  .insight-num.blue { color: var(--fukuoka); }
+  .insight-num.green { color: #27AE60; }
+
+  .insight-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* チャートエリア */
+  .chart-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px 32px 24px;
+    margin-bottom: 24px;
+  }
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+  }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  .legend-line {
+    width: 24px;
+    height: 2px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .legend-line.nagasaki { background: var(--nagasaki); height: 3px; }
+  .legend-line.fukuoka { background: var(--fukuoka); }
+  .legend-line.others {
+    background: var(--others);
+    border-top: 1px dashed var(--others);
+    height: 0;
+    border-width: 1.5px;
+  }
+
+  canvas { display: block; width: 100% !important; }
+
+  /* テーブルスクロール */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* データテーブル */
+  .table-section { margin-bottom: 40px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+
+  .data-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .data-table thead tr {
+    background: #F2F0EA;
+  }
+
+  .data-table th {
+    padding: 12px 16px;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table th:first-child { text-align: left; }
+
+  .data-table td {
+    padding: 10px 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+  }
+
+  .data-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .data-table tbody tr:last-child td { border-bottom: none; }
+
+  .data-table tbody tr:hover { background: #FAFAF6; }
+
+  td.nagasaki-val { color: var(--nagasaki) !important; font-weight: 500; }
+  td.fukuoka-val  { color: var(--fukuoka)  !important; font-weight: 500; }
+  td.positive     { color: #27AE60 !important; }
+
+  /* フッター */
+  footer {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .source-note {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.8;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+
+  /* レスポンシブ */
+  @media (max-width: 640px) {
+    header { padding: 28px 20px 24px; flex-direction: column; }
+    .header-stat { text-align: left; }
+    .insight-bar { grid-template-columns: 1fr; }
+    .chart-container { padding: 20px 16px 16px; }
+    main { padding: 24px 16px 0; }
+    footer { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <p class="eyebrow">Population Analysis · Kyushu 8 Prefectures · 1982–2025</p>
+    <h1>九州8県<br>転出超過数の累計推移</h1>
+    <p class="subtitle">出典：e-Stat 住民基本台帳人口移動報告　分析：あいぜん不動産</p>
+  </div>
+  <div class="header-stat">
+    <span class="stat-value">▲270,608</span>
+    <p class="stat-label">長崎県 累計転出超過（2025年）</p>
+  </div>
+</header>
+
+<main>
+
+  <div class="insight-bar">
+    <div class="insight-item">
+      <div class="insight-num red">九州最大</div>
+      <div class="insight-desc">長崎県の転出超過累計は<br>九州8県で最も大きい</div>
+    </div>
+    <div class="insight-item">
+      <div class="insight-num green">▲17,044人 改善</div>
+      <div class="insight-desc">2022年ボトムから3年で<br>累計が好転中（2022→2025）</div>
+    </div>
+    <div class="insight-item">
+      <div class="insight-num blue">+250,268人</div>
+      <div class="insight-desc">福岡県だけが転入超過の累計。<br>九州内の一極集中を示す</div>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <span class="chart-title">累計転出超過数の推移（単位：人）</span>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-line nagasaki"></div>
+          <span>長崎県</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line fukuoka"></div>
+          <span>福岡県</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line others"></div>
+          <span>他6県</span>
+        </div>
+      </div>
+    </div>
+    <canvas id="mainChart" height="400"></canvas>
+  </div>
+
+  <div class="table-section">
+    <p class="section-label">主要年の数値データ</p>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>年</th>
+          <th>長崎県</th>
+          <th>前年差</th>
+          <th>福岡県</th>
+          <th>佐賀県</th>
+          <th>熊本県</th>
+          <th>大分県</th>
+          <th>宮崎県</th>
+          <th>鹿児島県</th>
+          <th>沖縄県</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p class="source-note">
+    出典：e-Stat「都道府県・市区町村のすがた（社会・人口統計体系）」（1982〜2022年）、
+    e-Stat「住民基本台帳人口移動報告」APIより取得・接続（2023〜2025年）<br>
+    ※マイナス＝転出超過（県外に出た人が多い）　単位：人<br>
+    分析・グラフ制作：あいぜん不動産　© 2026
+  </p>
+</footer>
+
+<script>
+const DATA = {
+  years:    [1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],
+  nagasaki: [-8827,-17981,-28185,-37137,-48376,-60237,-70067,-81679,-91951,-102034,-110079,-114935,-119448,-124229,-129686,-134789,-139254,-144484,-149094,-153939,-158868,-164075,-169908,-178129,-187729,-197793,-206592,-212478,-217341,-221674,-226580,-232472,-238552,-244818,-250584,-257080,-263746,-270555,-276534,-282433,-287652,-281213,-276216,-270608],
+  fukuoka:  [3623,6165,4985,-48,-7465,-15152,-17306,-15236,-12254,-7419,3155,14241,24647,36693,48229,58765,68867,79345,89762,98748,107178,114561,121453,127370,132299,136266,139843,143188,147069,151900,157456,163629,170424,177537,184816,192383,200182,208176,215984,223675,232561,241948,246108,250268],
+  saga:     [-2645,-4852,-8689,-12827,-16693,-20385,-24080,-27582,-30445,-32787,-34152,-34761,-34574,-34196,-34885,-35763,-36440,-37176,-37786,-38429,-39093,-39751,-40519,-41285,-42028,-42839,-43571,-44165,-44737,-45277,-45827,-46424,-47069,-47745,-48399,-49063,-49754,-50379,-51143,-52322,-53450,-54579,-55708,-56837],
+  kumamoto: [-1551,-4073,-5367,-9030,-13177,-17807,-22904,-28274,-31887,-34850,-35646,-35340,-34740,-33796,-33908,-33736,-33572,-37646,-41173,-44536,-47611,-50818,-53923,-57428,-61296,-65518,-69360,-72303,-74840,-77002,-79458,-82366,-85456,-88730,-91846,-95174,-98688,-102201,-105806,-106529,-107185,-107908,-108631,-109354],
+  kagoshima:[-3147,-7752,-10983,-14758,-21699,-28325,-37419,-46990,-56593,-64684,-70956,-73282,-72173,-70158,-70372,-70938,-71440,-74587,-77974,-81613,-85150,-88785,-92694,-97312,-102289,-107638,-112672,-116778,-120430,-123648,-127049,-130940,-135069,-139416,-143621,-148095,-152618,-157022,-160298,-161836,-164340,-165878,-167416,-168954],
+  oita:     [-2330,-4415,-6762,-9972,-14756,-20723,-25394,-30123,-33655,-36506,-39437,-41435,-41864,-42809,-44323,-46000,-47498,-49268,-51051,-52697,-54378,-56144,-58098,-60345,-62683,-65168,-67482,-69361,-70829,-72163,-73580,-75317,-77192,-79115,-81047,-83050,-85081,-87057,-89368,-90809,-92609,-94049,-95489,-96929],
+  miyazaki: [-2231,-6174,-10097,-15037,-21822,-26610,-30701,-35671,-40628,-45581,-47546,-46986,-46753,-47189,-47977,-48660,-49381,-51612,-53843,-56204,-58496,-60989,-63556,-66482,-69413,-72423,-75228,-77652,-79916,-81968,-84083,-86380,-88744,-91151,-93567,-96108,-98679,-101120,-103602,-105048,-106851,-108297,-109743,-111189],
+  okinawa:  [-2577,-2985,-2279,-1565,-3435,-6196,-9961,-14236,-18592,-23874,-26406,-25919,-24664,-23643,-23678,-22964,-21817,-21153,-20543,-21330,-22648,-24247,-25816,-28157,-31026,-34312,-37501,-40153,-42366,-44534,-46864,-49390,-51712,-53889,-55964,-58120,-60304,-62399,-60710,-60227,-61564,-61081,-60598,-60115],
+};
+
+// 他6県（グレー破線）
+const otherPrefectures = [
+  { name: '佐賀県',   data: DATA.saga,      color: '#C8C5B8' },
+  { name: '熊本県',   data: DATA.kumamoto,  color: '#C8C5B8' },
+  { name: '大分県',   data: DATA.oita,      color: '#C8C5B8' },
+  { name: '宮崎県',   data: DATA.miyazaki,  color: '#C8C5B8' },
+  { name: '鹿児島県', data: DATA.kagoshima, color: '#C8C5B8' },
+  { name: '沖縄県',   data: DATA.okinawa,   color: '#C8C5B8' },
+];
+
+// Chart.js
+const ctx = document.getElementById('mainChart').getContext('2d');
+
+const datasets = [
+  // 他6県（後ろに描画）
+  ...otherPrefectures.map(p => ({
+    label: p.name,
+    data: p.data,
+    borderColor: p.color,
+    borderWidth: 1,
+    borderDash: [4, 4],
+    pointRadius: 0,
+    pointHoverRadius: 4,
+    tension: 0.3,
+    fill: false,
+    order: 2,
+  })),
+  // 福岡（中間）
+  {
+    label: '福岡県',
+    data: DATA.fukuoka,
+    borderColor: '#2C7BB6',
+    borderWidth: 2,
+    pointRadius: 0,
+    pointHoverRadius: 5,
+    tension: 0.3,
+    fill: false,
+    order: 1,
+  },
+  // 長崎（最前面・太線）
+  {
+    label: '長崎県',
+    data: DATA.nagasaki,
+    borderColor: '#C0392B',
+    borderWidth: 3.5,
+    pointRadius: 0,
+    pointHoverRadius: 6,
+    tension: 0.3,
+    fill: false,
+    order: 0,
+  },
+];
+
+new Chart(ctx, {
+  type: 'line',
+  data: { labels: DATA.years, datasets },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#FFFFFF',
+        borderColor: '#E2E0D8',
+        borderWidth: 1,
+        titleColor: '#1A1916',
+        bodyColor: '#6B6860',
+        padding: 12,
+        titleFont: { family: "'Noto Sans JP', sans-serif", size: 12, weight: '500' },
+        bodyFont: { family: "'Noto Sans JP', sans-serif", size: 12 },
+        callbacks: {
+          title: items => items[0].label + '年',
+          label: item => {
+            const v = item.raw;
+            const formatted = v >= 0
+              ? '+' + v.toLocaleString()
+              : '▲' + Math.abs(v).toLocaleString();
+            return ' ' + item.dataset.label + '：' + formatted + '人';
+          },
+          labelColor: item => ({
+            backgroundColor: item.dataset.borderColor,
+            borderColor: item.dataset.borderColor,
+          }),
+        },
+        filter: item => {
+          // 他6県はtooltipをまとめて1行ずつ（名前で区別）
+          return true;
+        },
+        itemSort: (a, b) => a.dataset.order - b.dataset.order,
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: '#9E9C94',
+          font: { family: "'Noto Sans JP', sans-serif", size: 11 },
+          maxTicksLimit: 12,
+          maxRotation: 0,
+        },
+        grid: { color: '#EDEDEA', lineWidth: 0.5 },
+        border: { color: '#E2E0D8' },
+      },
+      y: {
+        ticks: {
+          color: '#9E9C94',
+          font: { family: "'Noto Sans JP', sans-serif", size: 11 },
+          callback: v => (v >= 0 ? '+' : '▲') + Math.abs(v / 1000).toFixed(0) + 'k',
+        },
+        grid: { color: '#EDEDEA', lineWidth: 0.5 },
+        border: { color: '#E2E0D8', dash: [4, 4] },
+      },
+    },
+  },
+});
+
+// テーブル：主要年のみ表示
+const tableYears = [1990, 1995, 2000, 2005, 2010, 2015, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+const tbody = document.getElementById('tableBody');
+
+tableYears.forEach(y => {
+  const i = DATA.years.indexOf(y);
+  const prev = i > 0 ? DATA.nagasaki[i - 1] : null;
+  const diff = prev !== null ? DATA.nagasaki[i] - prev : null;
+  const diffStr = diff === null ? '—'
+    : diff > 0 ? '<span class="positive">+' + diff.toLocaleString() + '</span>'
+    : diff < 0 ? diff.toLocaleString()
+    : '0';
+
+  const fmt = v => v >= 0
+    ? '+' + v.toLocaleString()
+    : '▲' + Math.abs(v).toLocaleString();
+
+  // 2022→2023の改善を強調
+  const nagClass = (y >= 2023) ? 'nagasaki-val' : '';
+  const fukClass = (y >= 1992) ? 'fukuoka-val' : '';
+
+  tbody.innerHTML += `<tr>
+    <td>${y}年</td>
+    <td class="${nagClass}">${fmt(DATA.nagasaki[i])}</td>
+    <td>${diffStr}</td>
+    <td class="${fukClass}">${fmt(DATA.fukuoka[i])}</td>
+    <td>${fmt(DATA.saga[i])}</td>
+    <td>${fmt(DATA.kumamoto[i])}</td>
+    <td>${fmt(DATA.oita[i])}</td>
+    <td>${fmt(DATA.miyazaki[i])}</td>
+    <td>${fmt(DATA.kagoshima[i])}</td>
+    <td>${fmt(DATA.okinawa[i])}</td>
+  </tr>`;
+});
+</script>
+</body>
+</html>
