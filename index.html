@@ -291,11 +291,20 @@ tableYears.forEach(y => {
 });
 </script>
 
-<!-- 【追加260922】親ページ（WordPress）に実際の高さを通知し、iframeの枠を自動調整させるスクリプト -->
+<!-- 【追加260922／修正】親ページ（WordPress）に実際の高さを通知し、iframeの枠を自動調整させるスクリプト。
+     このページ自身のbody{min-height:100vh}が測定値を膨らませてしまう問題を避けるため、
+     footer要素の実際の位置を基準に高さを測るよう修正。 -->
 <script>
 (function(){
+  function computeContentHeight(){
+    var footer = document.querySelector('footer');
+    if (footer) {
+      return Math.ceil(footer.getBoundingClientRect().bottom + window.scrollY);
+    }
+    return Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+  }
   function sendHeight(){
-    var h = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+    var h = computeContentHeight();
     if (window.parent && window.parent !== window) {
       window.parent.postMessage({ dasIframeHeight: h }, '*');
     }
