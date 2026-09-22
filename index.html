@@ -290,5 +290,26 @@ tableYears.forEach(y => {
   </tr>`;
 });
 </script>
+
+<!-- 【追加260922】親ページ（WordPress）に実際の高さを通知し、iframeの枠を自動調整させるスクリプト -->
+<script>
+(function(){
+  function sendHeight(){
+    var h = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ dasIframeHeight: h }, '*');
+    }
+  }
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+  if (window.ResizeObserver) {
+    new ResizeObserver(sendHeight).observe(document.body);
+  } else {
+    setInterval(sendHeight, 1500);
+  }
+  setTimeout(sendHeight, 300);
+  setTimeout(sendHeight, 1000);
+})();
+</script>
 </body>
 </html>
